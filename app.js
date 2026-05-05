@@ -13,6 +13,7 @@ let pendingFilm  = null;
 let duelLow      = 0;
 let duelHigh     = 0;
 let duelBucket   = null; // 'bad' | 'mid' | 'good' — sentiment bucket
+let duelCount    = 0;    // tracks comparisons made for current film
 let searchTimer  = null;
 
 // Import queue: films waiting to be batch-added (persisted so you can pause & resume)
@@ -205,6 +206,7 @@ document.querySelectorAll('.sentiment-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     const sentiment = btn.dataset.sentiment; // 'bad' | 'mid' | 'good'
     duelBucket = sentiment;
+    duelCount  = 0; // reset comparison counter for new film
 
     // Map sentiment to a slice of the ranked list
     const n = rankedFilms.length;
@@ -235,9 +237,25 @@ document.querySelectorAll('.sentiment-btn').forEach(btn => {
 // ── DUEL (binary search) ──────────────────────────────────
 function startDuel() {
   if (duelLow >= duelHigh) {
-    insertPending(duelLow);
-    return;
+    // Enforce minimum 2 comparisons before inserting
+    if (duelCount < 2) {
+      // Widen the window slightly to force another comparison
+      const n   = rankedFilms.length;
+      const mid = Math.min(duelLow, n - 1);
+      duelLow   = Math.max(0, mid - 1);
+      duelHigh  = Math.min(n, mid + 2);
+
+      // If still collapsed (e.g. only 1 film exists), just insert
+      if (duelLow >= duelHigh || rankedFilms.length < 2) {
+        insertPending(duelLow);
+        return;
+      }
+    } else {
+      insertPending(duelLow);
+      return;
+    }
   }
+
   const mid = Math.floor((duelLow + duelHigh) / 2);
   showView('duel');
   renderDuel(mid);
@@ -249,8 +267,9 @@ function insertPending(position) {
   updateCount();
   const pos = position + 1;
   showToast(`"${pendingFilm.title}" ranked #${pos}`);
-  pendingFilm  = null;
-  duelBucket   = null;
+  pendingFilm = null;
+  duelBucket  = null;
+  duelCount   = 0; // reset
   afterInsert();
 }
 
@@ -306,6 +325,7 @@ document.querySelectorAll('.duel-card').forEach(card => {
   card.addEventListener('click', () => {
     const side = card.dataset.side;
     const mid  = parseInt(card.dataset.mid);
+    duelCount++; // increment on every choice made
     if (side === 'left') {
       duelHigh = mid;
     } else {
@@ -327,6 +347,7 @@ document.getElementById('pause-import-btn')?.addEventListener('click', () => {
   saveQueue();
   pendingFilm = null;
   duelBucket  = null;
+  duelCount   = 0;
   showToast(`Import paused — ${importQueue.length} films remaining`);
   showView('rank');
 });

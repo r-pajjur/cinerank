@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CineRank — Your Personal Film Hierarchy</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Instrument+Serif:ital@0;1&family=IBM+Plex+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <div class="scanlines"></div>
+
+  <!-- HEADER -->
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="logo">
+        <span class="logo-mark">▶</span>
+        <span class="logo-text">CINERANK</span>
+      </div>
+      <nav class="header-nav">
+        <button class="nav-btn active" data-view="rank">Ranking</button>
+        <button class="nav-btn" data-view="search">Search</button>
+        <button class="nav-btn" data-view="import">Import</button>
+      </nav>
+      <div class="film-count">
+        <span id="total-count">0</span>
+        <span class="count-label">films</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="main-content">
+
+    <!-- ── SEARCH VIEW ── -->
+    <section id="view-search" class="view hidden">
+      <div class="search-container">
+        <h2 class="view-title">Find a Film</h2>
+        <div class="search-bar-wrap">
+          <span class="search-icon">⌕</span>
+          <input type="text" id="search-input" placeholder="Title, year..." autocomplete="off" />
+        </div>
+        <div id="search-results" class="search-results"></div>
+      </div>
+    </section>
+
+    <!-- ── IMPORT VIEW ── -->
+    <section id="view-import" class="view hidden">
+      <div class="import-container">
+        <h2 class="view-title">Import from IMDb</h2>
+        <div class="import-steps">
+          <div class="import-step">
+            <span class="step-num">01</span>
+            <div class="step-text">
+              <strong>Export from IMDb</strong>
+              Go to <a href="https://www.imdb.com/list/ratings" target="_blank">imdb.com/list/ratings</a> → click the three-dot menu → <em>Export</em>. This downloads a <code>.csv</code> file of your ratings.
+            </div>
+          </div>
+          <div class="import-step">
+            <span class="step-num">02</span>
+            <div class="step-text">
+              <strong>Drop it here</strong>
+              Upload that CSV and we'll match each film to TMDB for posters, then add them all to your ranking queue.
+            </div>
+          </div>
+          <div class="import-step">
+            <span class="step-num">03</span>
+            <div class="step-text">
+              <strong>Rank as you go</strong>
+              Imported films are added in IMDb rating order (highest first). You can duel them against each other to fine-tune the order — and pause any time to come back later.
+            </div>
+          </div>
+        </div>
+
+        <label class="drop-zone" id="drop-zone">
+          <input type="file" id="csv-input" accept=".csv" hidden />
+          <div class="drop-icon">↑</div>
+          <div class="drop-label">Drop your IMDb CSV here</div>
+          <div class="drop-sub">or click to browse</div>
+        </label>
+
+        <div id="import-status" class="import-status hidden"></div>
+      </div>
+    </section>
+
+    <!-- ── SENTIMENT VIEW ── -->
+    <section id="view-sentiment" class="view hidden">
+      <div class="sentiment-container">
+        <p class="sentiment-eyebrow">First impression</p>
+        <div class="sentiment-film">
+          <img class="sentiment-poster" id="sentiment-poster" src="" alt="" />
+          <div class="sentiment-meta">
+            <p class="sentiment-year" id="sentiment-year"></p>
+            <h2 class="sentiment-title" id="sentiment-title"></h2>
+          </div>
+        </div>
+        <p class="sentiment-prompt">How did you feel about it?</p>
+        <div class="sentiment-btns">
+          <button class="sentiment-btn" data-sentiment="bad">
+            <span class="sentiment-icon">✕</span>
+            <span class="sentiment-label">Didn't like it</span>
+          </button>
+          <button class="sentiment-btn" data-sentiment="mid">
+            <span class="sentiment-icon">◦</span>
+            <span class="sentiment-label">It was okay</span>
+          </button>
+          <button class="sentiment-btn" data-sentiment="good">
+            <span class="sentiment-icon">✓</span>
+            <span class="sentiment-label">Liked it</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── DUEL VIEW ── -->
+    <section id="view-duel" class="view hidden">
+      <div class="duel-container">
+        <p class="duel-eyebrow">Which did you prefer?</p>
+        <div class="duel-arena">
+          <div class="duel-card" id="duel-left" data-side="left">
+            <div class="duel-poster-wrap">
+              <img class="duel-poster" id="duel-left-img" src="" alt="" />
+              <div class="duel-hover-bar">Pick this</div>
+            </div>
+            <div class="duel-info">
+              <p class="duel-year" id="duel-left-year"></p>
+              <h3 class="duel-film-title" id="duel-left-title"></h3>
+            </div>
+          </div>
+
+          <div class="vs-col">
+            <div class="vs-line"></div>
+            <span class="vs-text">VS</span>
+            <div class="vs-line"></div>
+            <button class="too-tough-btn" id="too-tough-btn" title="Too hard to choose — rank them together">
+              <span class="tt-icon">≈</span>
+              <span class="tt-label">Too tough</span>
+            </button>
+          </div>
+
+          <div class="duel-card" id="duel-right" data-side="right">
+            <div class="duel-poster-wrap">
+              <img class="duel-poster" id="duel-right-img" src="" alt="" />
+              <div class="duel-hover-bar">Pick this</div>
+            </div>
+            <div class="duel-info">
+              <p class="duel-year" id="duel-right-year"></p>
+              <h3 class="duel-film-title" id="duel-right-title"></h3>
+            </div>
+          </div>
+        </div>
+
+        <!-- Import progress + pause -->
+        <div class="duel-import-footer">
+          <p id="duel-import-progress" class="duel-import-progress" style="display:none;"></p>
+          <button class="pause-import-btn" id="pause-import-btn" style="display:none;">
+            <span>⏸</span> Pause import
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── RANK VIEW ── -->
+    <section id="view-rank" class="view">
+      <div class="rank-container">
+        <h2 class="view-title">The List</h2>
+
+        <!-- Resume import banner -->
+        <div id="resume-import-banner" class="resume-banner" style="display:none;">
+          <div class="resume-banner-text">
+            <span class="resume-banner-icon">⏸</span>
+            Import paused — <strong><span id="resume-count">0</span></strong> films remaining
+          </div>
+          <div class="resume-banner-actions">
+            <button class="resume-btn" id="resume-import-btn">Resume</button>
+            <button class="discard-btn" id="discard-import-btn">Discard</button>
+          </div>
+        </div>
+
+        <ol id="ranked-list" class="ranked-list"></ol>
+      </div>
+    </section>
+
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
